@@ -3,9 +3,9 @@ import { ethers } from "ethers";
 import ErrorMessage from "./ErrorMessage";
 import SuccessMessage from "./SuccessMessage";
 
-const verifyMessage = async ({ message, address, signature }) => {
+const verifyMessage = async ({ message, isEip191, address, signature }) => {
   try {
-    const signerAddr = await ethers.utils.verifyMessage(message, signature);
+    const signerAddr = ethers.utils.verifyMessage(isEip191 ? ethers.utils.hashMessage(message) : message, signature);
     if (signerAddr !== address) {
       return false;
     }
@@ -29,6 +29,7 @@ export default function VerifyMessage() {
     const isValid = await verifyMessage({
       setError,
       message: data.get("message"),
+      isEip191: data.get("eip191"),
       address: data.get("address"),
       signature: data.get("signature")
     });
@@ -56,6 +57,12 @@ export default function VerifyMessage() {
                 className="textarea w-full h-24 textarea-bordered focus:ring focus:outline-none"
                 placeholder="Message"
               />
+            </div>
+            <div className="my-3">
+              <label className="">
+                <input type="checkbox" className="form-checkbox" name="eip191" />
+                <span className="font-bold">&nbsp;Is EIP-191 signed message?</span>
+              </label>
             </div>
             <div className="my-3">
               <textarea
