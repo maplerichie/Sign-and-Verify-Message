@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { ethers } from "ethers";
 import ErrorMessage from "./ErrorMessage";
 
-const signMessage = async ({ setError, message }) => {
+const signMessage = async ({ setError, message, isEip191 }) => {
   try {
     console.log({ message });
     if (!window.ethereum)
@@ -11,7 +11,12 @@ const signMessage = async ({ setError, message }) => {
     await window.ethereum.send("eth_requestAccounts");
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const signer = provider.getSigner();
-    const signature = await signer.signMessage(message);
+    let signature;
+    if (isEip191) {
+      signature = await signer.signMessage(ethers.utils.hashMessage(message));
+    } else {
+      signature = await signer.signMessage(message);
+    }
     const address = await signer.getAddress();
 
     return {
@@ -35,7 +40,8 @@ export default function SignMessage() {
     setError();
     const sig = await signMessage({
       setError,
-      message: data.get("message")
+      message: data.get("message"),
+      isEip191: data.get("eip191")
     });
     if (sig) {
       setSignatures([...signatures, sig]);
@@ -58,6 +64,12 @@ export default function SignMessage() {
                 className="textarea w-full h-24 textarea-bordered focus:ring focus:outline-none"
                 placeholder="Message"
               />
+            </div>
+            <div>
+              <label className="">
+                <input type="checkbox" className="form-checkbox" name="eip191" />
+                <span className="font-bold">&nbsp;EIP-191 compliant</span>
+              </label>
             </div>
           </div>
         </main>
